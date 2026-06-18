@@ -1,0 +1,152 @@
+[
+  {
+    "id": "tab_class_test_suite",
+    "type": "tab",
+    "label": "Class Test Suite",
+    "disabled": false,
+    "info": "Run one-click test payloads for all classroom devices"
+  },
+  {
+    "id": "inject_all_classes",
+    "type": "inject",
+    "z": "tab_class_test_suite",
+    "name": "Run All Class Tests",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "payload": "date",
+    "payloadType": "date",
+    "x": 170,
+    "y": 100,
+    "wires": [
+      [
+        "build_suite_payloads"
+      ]
+    ]
+  },
+  {
+    "id": "build_suite_payloads",
+    "type": "function",
+    "z": "tab_class_test_suite",
+    "name": "Build Suite Payloads",
+    "func": "const today = new Date().toISOString().split('T')[0];\nconst hour = new Date().getHours().toString().padStart(2, '0');\nconst hourStart = `${hour}:00:00`;\nconst hourEnd = `${hour}:59:59`;\n\nmsg.payload = [\n    { device_id: 1, class_code: 'Q1.01.02', consumption: 2.50, consumption_date: today, hour_start: hourStart, hour_end: hourEnd, temperature: 24.5, humidity: 65, notes: 'Suite test Q1.01.02 AC' },\n    { device_id: 2, class_code: 'Q1.01.02', consumption: 0.82, consumption_date: today, hour_start: hourStart, hour_end: hourEnd, notes: 'Suite test Q1.01.02 Lamp' },\n    { device_id: 3, class_code: 'Q1.01.03', consumption: 2.35, consumption_date: today, hour_start: hourStart, hour_end: hourEnd, temperature: 24.2, humidity: 64.5, notes: 'Suite test Q1.01.03 AC' },\n    { device_id: 4, class_code: 'Q1.01.03', consumption: 0.86, consumption_date: today, hour_start: hourStart, hour_end: hourEnd, notes: 'Suite test Q1.01.03 Lamp' },\n    { device_id: 5, class_code: 'Q1.01.04', consumption: 2.70, consumption_date: today, hour_start: hourStart, hour_end: hourEnd, temperature: 24.8, humidity: 63.8, notes: 'Suite test Q1.01.04 AC' },\n    { device_id: 6, class_code: 'Q1.01.04', consumption: 0.96, consumption_date: today, hour_start: hourStart, hour_end: hourEnd, notes: 'Suite test Q1.01.04 Lamp' },\n    { device_id: 7, class_code: 'Q1.01.09', consumption: 2.10, consumption_date: today, hour_start: hourStart, hour_end: hourEnd, temperature: 24.0, humidity: 66.0, notes: 'Suite test Q1.01.09 AC' },\n    { device_id: 9, class_code: 'Q1.01.11', consumption: 2.95, consumption_date: today, hour_start: hourStart, hour_end: hourEnd, temperature: 23.9, humidity: 66.8, notes: 'Suite test Q1.01.11 AC' }\n];\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 390,
+    "y": 100,
+    "wires": [
+      [
+        "split_suite_payloads"
+      ]
+    ]
+  },
+  {
+    "id": "split_suite_payloads",
+    "type": "split",
+    "z": "tab_class_test_suite",
+    "name": "Split Per Device",
+    "splt": "\\n",
+    "spltType": "str",
+    "arraySplt": 1,
+    "arraySpltType": "len",
+    "stream": false,
+    "addname": "",
+    "x": 590,
+    "y": 100,
+    "wires": [
+      [
+        "delay_suite"
+      ]
+    ]
+  },
+  {
+    "id": "delay_suite",
+    "type": "delay",
+    "z": "tab_class_test_suite",
+    "name": "Delay 1s",
+    "pauseType": "delay",
+    "timeout": "1",
+    "timeoutUnits": "seconds",
+    "rate": "1",
+    "nbRateUnits": "1",
+    "rateUnits": "second",
+    "randomFirst": "1",
+    "randomLast": "5",
+    "randomUnits": "seconds",
+    "drop": false,
+    "allowrate": false,
+    "outputs": 1,
+    "x": 760,
+    "y": 100,
+    "wires": [
+      [
+        "post_suite"
+      ]
+    ]
+  },
+  {
+    "id": "post_suite",
+    "type": "http request",
+    "z": "tab_class_test_suite",
+    "name": "POST to Backend",
+    "method": "POST",
+    "ret": "txt",
+    "paytoqs": "ignore",
+    "url": "http://10.12.1.97:5000/api/v1/consumption",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "senderr": false,
+    "headers": [
+      {
+        "keyType": "Content-Type",
+        "keyValue": "application/json"
+      }
+    ],
+    "x": 930,
+    "y": 100,
+    "wires": [
+      [
+        "check_suite_response"
+      ]
+    ]
+  },
+  {
+    "id": "check_suite_response",
+    "type": "function",
+    "z": "tab_class_test_suite",
+    "name": "Check Response",
+    "func": "try {\n    const data = typeof msg.payload === 'string' ? JSON.parse(msg.payload) : msg.payload;\n    if (data.success) {\n        node.status({ fill: 'green', shape: 'dot', text: 'Saved ' + new Date().toLocaleTimeString() });\n        msg.payload = data;\n        return msg;\n    }\n    node.warn('API error: ' + (data.message || 'Unknown'));\n    node.status({ fill: 'red', shape: 'ring', text: 'API error' });\n    return null;\n} catch (error) {\n    node.warn('Failed to parse response: ' + error.message);\n    node.status({ fill: 'red', shape: 'ring', text: 'Parse error' });\n    return null;\n}",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 1120,
+    "y": 100,
+    "wires": [
+      [
+        "debug_suite_response"
+      ]
+    ]
+  },
+  {
+    "id": "debug_suite_response",
+    "type": "debug",
+    "z": "tab_class_test_suite",
+    "name": "Suite API Response",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 1320,
+    "y": 100,
+    "wires": []
+  }
+]

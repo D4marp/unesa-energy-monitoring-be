@@ -1,0 +1,167 @@
+[
+  {
+    "id": "tab_device_status_monitor",
+    "type": "tab",
+    "label": "Device Online/Offline Monitor",
+    "disabled": false,
+    "info": "Fetch devices from backend, evaluate last heartbeat/reading, then update status active/offline"
+  },
+  {
+    "id": "inject_device_status_monitor",
+    "type": "inject",
+    "z": "tab_device_status_monitor",
+    "name": "Run Every 1 Minute",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "2",
+    "payload": "date",
+    "payloadType": "date",
+    "x": 170,
+    "y": 120,
+    "wires": [
+      [
+        "http_get_devices"
+      ]
+    ]
+  },
+  {
+    "id": "http_get_devices",
+    "type": "http request",
+    "z": "tab_device_status_monitor",
+    "name": "GET Devices",
+    "method": "GET",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "http://10.12.1.97:5000/api/v1/devices",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 380,
+    "y": 120,
+    "wires": [
+      [
+        "evaluate_device_status",
+        "debug_device_list"
+      ]
+    ]
+  },
+  {
+    "id": "evaluate_device_status",
+    "type": "function",
+    "z": "tab_device_status_monitor",
+    "name": "Evaluate Online/Offline",
+    "func": "const payload = msg.payload || {};\nconst rows = Array.isArray(payload.data) ? payload.data : [];\nconst offlineThresholdMinutes = 5;\nconst thresholdMs = offlineThresholdMinutes * 60 * 1000;\nconst now = Date.now();\n\nconst result = rows.map((d) => {\n    const lastSeenRaw = d.last_reading || d.last_heartbeat || null;\n    const lastSeenMs = lastSeenRaw ? Date.parse(lastSeenRaw) : NaN;\n    const online = Number.isFinite(lastSeenMs) && (now - lastSeenMs) <= thresholdMs;\n\n    return {\n        id: d.id,\n        device_name: d.device_name,\n        class_id: d.class_id,\n        current_status: d.status,\n        current_iot_status: d.iot_status,\n        last_seen: lastSeenRaw,\n        status: online ? 'active' : 'offline'\n    };\n});\n\nmsg.payload = result;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 610,
+    "y": 120,
+    "wires": [
+      [
+        "split_status_updates"
+      ]
+    ]
+  },
+  {
+    "id": "split_status_updates",
+    "type": "split",
+    "z": "tab_device_status_monitor",
+    "name": "Split Per Device",
+    "splt": "\\n",
+    "spltType": "str",
+    "arraySplt": 1,
+    "arraySpltType": "len",
+    "stream": false,
+    "addname": "",
+    "x": 810,
+    "y": 120,
+    "wires": [
+      [
+        "build_status_patch"
+      ]
+    ]
+  },
+  {
+    "id": "build_status_patch",
+    "type": "function",
+    "z": "tab_device_status_monitor",
+    "name": "Build PATCH Request",
+    "func": "const d = msg.payload;\nmsg.url = `http://10.12.1.97:5000/api/v1/devices/${d.id}/status`;\nmsg.payload = { status: d.status };\nmsg.headers = { 'Content-Type': 'application/json' };\nmsg.device = d;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1030,
+    "y": 120,
+    "wires": [
+      [
+        "http_patch_status"
+      ]
+    ]
+  },
+  {
+    "id": "http_patch_status",
+    "type": "http request",
+    "z": "tab_device_status_monitor",
+    "name": "PATCH Device Status",
+    "method": "PATCH",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 1240,
+    "y": 120,
+    "wires": [
+      [
+        "debug_status_result"
+      ]
+    ]
+  },
+  {
+    "id": "debug_device_list",
+    "type": "debug",
+    "z": "tab_device_status_monitor",
+    "name": "Device Snapshot",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 610,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "debug_status_result",
+    "type": "debug",
+    "z": "tab_device_status_monitor",
+    "name": "Status Update Result",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 1450,
+    "y": 120,
+    "wires": []
+  }
+]

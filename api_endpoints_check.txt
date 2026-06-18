@@ -1,0 +1,60 @@
+=== BACKEND API ENDPOINTS CHECK ===
+
+CLASSES API (✓ Lengkap)
+  ✓ GET    /api/v1/classes           - getAll()
+  ✓ GET    /api/v1/classes/:id       - getById()
+  ✓ POST   /api/v1/classes           - create()
+  ✓ PUT    /api/v1/classes/:id       - update()
+  ✓ DELETE /api/v1/classes/:id       - delete()
+
+DEVICES API (✓ Lengkap)
+  ✓ GET    /api/v1/devices           - getAll()
+  ✓ GET    /api/v1/devices/:id       - getById()
+  ✓ GET    /api/v1/devices/class/:classId - getByClass()
+  ✓ GET    /api/v1/devices/type/:type    - getByType()
+  ✓ POST   /api/v1/devices           - create()
+  ✓ PUT    /api/v1/devices/:id       - update()
+  ✓ PATCH  /api/v1/devices/:id/status    - updateStatus()
+  ✓ PATCH  /api/v1/devices/:id/reading   - updateReading()
+  ✓ DELETE /api/v1/devices/:id       - delete()
+
+CONSUMPTION API (✓ Lengkap)
+  ✓ GET    /api/v1/consumption/device/:deviceId         - getByDevice(date)
+  ✓ GET    /api/v1/consumption/class/:classId           - getByClass(startDate, endDate)
+  ✓ GET    /api/v1/consumption/daily/:deviceId          - getDaily(date)
+  ✓ GET    /api/v1/consumption/monthly/:deviceId        - getMonthly(month)
+  ✓ GET    /api/v1/consumption/total/class/:classId     - getTotalByClass()
+  ✓ GET    /api/v1/consumption/hourly/class/:classId    - getHourlyAggregated()
+  ✓ POST   /api/v1/consumption                          - create()
+  ✓ POST   /api/v1/consumption/bulk                     - bulkCreate()
+  ✓ DELETE /api/v1/consumption/:id                      - delete()
+
+ALERTS API (✓ Lengkap)
+  ✓ GET    /api/v1/alerts            - getAll()
+  ✓ GET    /api/v1/alerts/:id        - getById()
+  ✓ GET    /api/v1/alerts/count/unread       - getUnreadCount()
+  ✓ GET    /api/v1/alerts/summary/stats      - getSummary()
+  ✓ GET    /api/v1/alerts/device/:deviceId   - getByDevice()
+  ✓ GET    /api/v1/alerts/class/:classId     - getByClass()
+  ✓ POST   /api/v1/alerts            - create()
+  ✓ PUT    /api/v1/alerts/:id        - update()
+  ✓ PATCH  /api/v1/alerts/:id/read   - markAsRead()
+  ✓ PATCH  /api/v1/alerts/read/all   - markAllAsRead()
+  ✓ DELETE /api/v1/alerts/:id        - delete()
+
+SETTINGS API (✓ Lengkap)
+  ✓ GET    /api/v1/settings          - getAll()
+  ✓ GET    /api/v1/settings/:key     - getByKey()
+  ✓ POST   /api/v1/settings          - set()
+  ✓ PUT    /api/v1/settings/:key     - update()
+  ✓ GET    /api/v1/settings/user/:userId           - getUserSettings()
+  ✓ PUT    /api/v1/settings/user/:userId           - updateUserSettings()
+  ✓ DELETE /api/v1/settings/:key     - delete()
+
+YANG DIBUAT/DIPERBAIKI:
+  ✓ Created: SettingsController.js  
+  ✓ Added: PUT /settings/:key route
+  ✓ Fixed: ConsumptionController.getMonthly() untuk handle month dalam format YYYY-MM
+  ✓ Fixed: Frontend settings/page.tsx handleSave() untuk call update() dengan parameter yang benar
+
+=== VERIFIED READY FOR TESTING ===
