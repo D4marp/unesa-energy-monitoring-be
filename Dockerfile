@@ -16,4 +16,4 @@ COPY . .
 # Expose backend port (default 5000/5001)
 EXPOSE 5000
 
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "node scripts/db-init.js && node scripts/migrate_device_consumption.js && node server.js"]
